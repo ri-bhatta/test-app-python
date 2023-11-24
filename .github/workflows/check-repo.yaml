@@ -1,0 +1,30 @@
+name: Check Repository Status
+
+on:
+  workflow_run:
+    workflows: ["Build and Push Docker Image"]
+    types:
+      - completed
+
+jobs:
+  check-repository-status:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Check Repository Status
+      run: |
+        REPO_OWNER=google-github-actions
+        REPO_NAME=setup-gcloud
+        TOKEN=$GITHUB_TOKEN  # GitHub token with necessary permissions
+
+        STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token $TOKEN" https://api.github.com/repos/$REPO_OWNER/$REPO_NAME)
+        
+        if [ "$STATUS_CODE" -eq "200" ]; then
+          echo "Repository is accessible."
+        else
+          echo "Error: Unable to access the repository. Status code: $STATUS_CODE"
+          exit 1
+        fi
